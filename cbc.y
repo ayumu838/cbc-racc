@@ -6,23 +6,9 @@ preclow
 prechigh
 
 rule
-  program : stmt { p "result is #{result} val is #{val}" }
-          ;
-  stmt    : expr tEND { result = val[0]; p "stmt is #{result}" }
-          | expr { result = val[0]; p "stmt expr is #{result}" }
-          ;
-  expr    : primary { result = val[0]; p "primary is #{result}" }
-          | tSTRLIT expr tSTRLIT =STRING { result = "'#{val[1]}'"; p "string is #{result}" }
-          | expr expr { result = val.join(' '); p "expr expr is #{result}" }
-          ;
-  primary : INTEGER {resut = val[0]}
-          | IDENTIFIER { resut = val[0]}
-          | tEND { result = val[0]}
-          | tLITERAL { result = val[0]}
-          | '{' expr '}' { result = "{ #{val[1]} }"}
-          | '(' expr ')' { result = "( #{val[1]} )"}
-          | expr '.' expr { result = val.join}
-          ;
+  program   : statment { p "result is #{result} val is #{val}" }
+            ;
+  statment  : { result = val[0]};
 end
 
 ---- header
@@ -31,34 +17,72 @@ end
 
   def parse(str)
     @tokens ||= []
+
     until str.nil? || str.empty?
       case str
       when /\A\s+/
         # do nothing
-      when /\A\d+/
-        @tokens <<  [:INTEGER, $&.to_i]
-      when /\A\./
-        @tokens << ['.', $&]
-      when /\A\(/
-        @tokens << ['(', $&]
-      when /\A\)/
-        @tokens << [')', $&]
-      when /\A\{/
-        @tokens << ['{', $&]
-      when /\A\}/
-        @tokens << ['}', $&]
-      when /\A,/
-        @tokens << [:tLITERAL, $&]
-      when /\A'/
-        @tokens << [:tSTRLIT, $&]
-      when /A"/
-        @tokens << [:tSTRLIT, $&]
-      when /\A,/
-        @tokens << [:IDENTIFIER, $&]
-      when /\A\;/
-        @tokens << [:tEND, $&]
-      when /\A\w+/
+      when /\Avoid/
+        @tokens << [:VOID, $&]
+      when /\Achar/
+        @tokens << [:CHAR, $&]
+      when /\Ashort/
+        @tokens << [:SHORT, $&]
+      when /\Aint/
+        @tokens << [:INT, $&]
+      when /\Along/
+        @tokens << [:LONG, $&]
+      when /\Astruct/
+        @tokens << [:STRUCT, $&]
+      when /\Aunion/
+        @tokens << [:UNION, $&]
+      when /\Aenum/
+        @tokens << [:ENUM, $&]
+      when /\Astatic/
+        @tokens << [:STATIC, $&]
+      when /\Aextern/
+        @tokens << [:EXTERN, $&]
+      when /\Aconst/
+        @tokens << [:CONST, $&]
+      when /\Asigned/
+        @tokens << [:SIGNED, $&]
+      when /\Aunsigned/
+        @tokens << [:UNSIGNED, $&]
+      when /\Aif/
+        @tokens << [:IF, $&]
+      when /\Aelse/
+        @tokens << [:ELSE, $&]
+      when /\Aswitch/
+        @tokens << [:SWITCH, $&]
+      when /\Acase/
+        @tokens << [:CASE, $&]
+      when /\Adefault/
+        @tokens << [:DEFAULT_, $&]
+      when /\Awhile/
+        @tokens << [:WHILE, $&]
+      when /\Ado/
+        @tokens << [:DO, $&]
+      when /\Afor/
+        @tokens << [:FOR, $&]
+      when /\Areturn/
+        @tokens << [:RETURN, $&]
+      when /\Abreak/
+        @tokens << [:BREAK, $&]
+      when /\Acontinue/
+        @tokens << [:CONTINUE, $&]
+      when /\Agoto/
+        @tokens << [:GOTO, $&]
+      when /\Atypedef/
+        @tokens << [:TYPEDEF, $&]
+      when /\Aimport/
+        @tokens << [:IMPORT, $&]
+      when /\Asizeof/
+        @tokens << [:SIZEOF, $&]
+
+      when /[a-zA-Z_]\w*/
         @tokens <<  [:IDENTIFIER, $&]
+      when /.*/
+        # do nothing
       end
       str = $'
     end
