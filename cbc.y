@@ -6,14 +6,22 @@ preclow
 prechigh
 
 rule
-  program : expr { p "result is #{result} val is #{val}" }
+  program : stmt { p "result is #{result} val is #{val}" }
           ;
-  expr    : expr expr { result = val.join(' ')}
-          | primary { result = val[0]}
+  stmt    : expr tEND { result = val[0]; p "stmt is #{result}" }
+          | expr { result = val[0]; p "stmt expr is #{result}" }
+          ;
+  expr    : primary { result = val[0]; p "primary is #{result}" }
+          | tSTRLIT expr tSTRLIT =STRING { result = "'#{val[1]}'"; p "string is #{result}" }
+          | expr expr { result = val.join(' '); p "expr expr is #{result}" }
+          ;
+  primary : INTEGER {resut = val[0]}
+          | IDENTIFIER { resut = val[0]}
+          | tEND { result = val[0]}
+          | tLITERAL { result = val[0]}
+          | '{' expr '}' { result = "{ #{val[1]} }"}
+          | '(' expr ')' { result = "( #{val[1]} )"}
           | expr '.' expr { result = val.join}
-          ;
-  primary : NUMBER {resut = val[0] }
-          | TEST { resut = val[0] }
           ;
 end
 
@@ -23,21 +31,39 @@ end
 
   def parse(str)
     @tokens ||= []
-    until str.empty?
+    until str.nil? || str.empty?
       case str
       when /\A\s+/
         # do nothing
-      when /\A[a-zA-Z_]+/
-        @tokens <<  [:TEST, $&]
       when /\A\d+/
-        @tokens <<  [:NUMBER, $&.to_i]
-      when /\./
+        @tokens <<  [:INTEGER, $&.to_i]
+      when /\A\./
         @tokens << ['.', $&]
+      when /\A\(/
+        @tokens << ['(', $&]
+      when /\A\)/
+        @tokens << [')', $&]
+      when /\A\{/
+        @tokens << ['{', $&]
+      when /\A\}/
+        @tokens << ['}', $&]
+      when /\A,/
+        @tokens << [:tLITERAL, $&]
+      when /\A'/
+        @tokens << [:tSTRLIT, $&]
+      when /A"/
+        @tokens << [:tSTRLIT, $&]
+      when /\A,/
+        @tokens << [:IDENTIFIER, $&]
+      when /\A\;/
+        @tokens << [:tEND, $&]
+      when /\A\w+/
+        @tokens <<  [:IDENTIFIER, $&]
       end
       str = $'
-      break if str.nil?
     end
     @tokens << [false, '$']
+    p @tokens
     do_parse
   end
 
@@ -49,11 +75,12 @@ end
 ---- footer
 
 parser = Cbc.new
-begin
-  p parser.parse('file.read aaa 1111 hoge')
-rescue => e
-  puts 'end'
-  puts e
+File.open('src/hello-world.cbc') do |f|
+  begin
+    p parser.parse(f.readlines.join(' '))
+  rescue => e
+    puts e
+  end
 end
 
 puts "\n"
